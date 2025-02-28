@@ -1,0 +1,59 @@
+// src/app/page.js
+'use client';
+
+import { useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+
+export default function Home() {
+    const [user, setUser] = useState(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((authUser) => {
+            if (authUser) {
+                setUser(authUser);
+            } else {
+                setUser(null);
+                router.push('/login');
+            }
+        });
+
+        return () => unsubscribe();
+    }, [router]);
+
+    const handleSignOut = async () => {
+        try {
+            await auth.signOut();
+            router.push('/login');  // Redirect to login after sign out
+        } catch (error) {
+            console.error("Sign out error", error);
+        }
+    };
+
+    if (user === null) {
+        return <div>Loading...</div>; // Or some other loading indicator.
+    }
+
+    return (
+        <div>
+            <h1>Welcome to CATC Travel Agency</h1>
+            {user ? (
+                <div>
+                    Signed in as a {user.email}
+                    <button onClick={handleSignOut}>Sign Out</button>
+                </div>
+            ) : (
+                <div>Not signed in</div>
+            )}
+        </div>
+    );
+
+}
+
+
+
+
+
+
+
