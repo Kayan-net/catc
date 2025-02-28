@@ -1,6 +1,9 @@
+// src/app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export const authOptions = {
     providers: [
@@ -16,20 +19,16 @@ export const authOptions = {
                 }
 
                 try {
-                    const bcrypt = await import('bcryptjs'); // Dynamically import bcryptjs
+                    //Authenticate User with Firebase
+                    const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
+                    const user = userCredential.user;
 
-                    if (credentials.email === "test@example.com") {
-                        const passwordMatch = await bcrypt.compare(credentials.password, "$2a$10$L4rXb0x6t.561NqGjK9s4O6fJ6/U0823U05jK1i24m/20f1.h45gK");
-
-                        if (passwordMatch) {
-                            return { id: "1", name: "Test User", email: "test@example.com" };
-                        }
-                    }
-                    return null;
+                    // Return user info
+                    return { id: user.uid, name: user.displayName, email: user.email };
 
                 } catch (error) {
-                    console.error("Error during bcrypt comparison:", error);
-                    return null; // Or handle the error appropriately
+                    console.error("Error during authentication:", error);
+                    return null;
                 }
             }
         }),
